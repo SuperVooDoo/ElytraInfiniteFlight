@@ -1,0 +1,7 @@
+name,total_time,goal,final_x,final_y,horizontal_speed,rate_of_climb
+Rectangles,2000,max_height,2507.2,67.2,25.07,0.67
+Rectangles,2000,max_distance,2691.9,0.4,26.92,0.0
+RSBoi,2000,max_height,1990.4,90.1,19.9,0.9
+RSBoi,2000,max_distance,2743.7,3.3,27.44,0.03
+Waves,2000,max_height,2129.9,95.8,21.3,0.96
+Waves,2000,max_distance,2787.2,4.3,27.87,0.04

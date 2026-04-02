@@ -175,7 +175,7 @@ class SolutionTemplate:
         plt.tight_layout()
 
         if save_name:
-            plt.savefig(f"Solutions/Plots/{save_name}_{self.goal}_{self.TOTAL_TIME}.png")
+            plt.savefig(f"Results/Plots/{save_name}_{self.goal}_{self.TOTAL_TIME}.png")
 
         if not save_only:  
             plt.show()
@@ -183,10 +183,10 @@ class SolutionTemplate:
 
     def save_results(self, name):
         
-        with open(f"Solutions/Instances/{name}_{self.goal}_{self.TOTAL_TIME}", 'wb') as f:
+        with open(f"Results/Instances/{name}_{self.goal}_{self.TOTAL_TIME}", 'wb') as f:
             dill.dump(self, f)
         
-        csv_path = "Solutions/results_leaderboard.csv"
+        csv_path = "Results/results_leaderboard.csv"
 
         with open(csv_path, 'r', newline='') as f:  # Read existing entries to check for duplicates
             reader = csv.reader(f)
@@ -219,7 +219,7 @@ class SolutionTemplate:
 
     @classmethod
     def load_results(cls, filename):
-        with open(f"Solutions/Instances/{filename}", 'rb') as f:
+        with open(f"Results/Instances/{filename}", 'rb') as f:
             return dill.load(f)
 
 
