@@ -3,9 +3,11 @@ import numpy as np
 import csv
 import cma
 import dill
+import json
 import matplotlib.pyplot as plt
 
-from ElytraMovement import *
+from ElytraMovement import simulate_pitch_list
+import pitch_functions
 
 
 class SolutionTemplate:
@@ -216,61 +218,26 @@ class SolutionTemplate:
 
 
 
+def LoadLogics(path="logic_config.json"):
+    with open(path) as f:
+        logics = json.load(f)
 
+    logic_dict = {}
+    for name, config in logics.items():
+        func     = getattr(pitch_functions, f"{name}_pitch_function")
+        params   = config["params"]
+        ranges   = [p["range"]   for p in params.values()]
+        defaults = [p["default"] for p in params.values()]
+        logic_dict[name] = [func, ranges, defaults]
 
-    
-def RSBoi_pitch_function(descent_time = 120, descent_angle = 33, up_angle= -50, pitch_change_rate = 0.5):
-    return np.concatenate([
-        np.full(int(descent_time), descent_angle),
-        np.arange(up_angle, descent_angle, pitch_change_rate)
-    ])
+    return logic_dict
 
-def Inverse_RSBoi_pitch_function(down_angle = 50, pitch_change_rate = -0.5, ascent_time = 120, ascent_angle = -33):
-    return np.concatenate([
-        np.arange(down_angle, ascent_angle, -pitch_change_rate),
-        np.full(int(ascent_time), ascent_angle)
-    ])
+logic_dict = LoadLogics()
 
-def Rectangles_pitch_function(descent_time = 160, descent_angle = 33, ascent_time = 120, ascent_angle = -33):
-    return np.concatenate([
-        np.full(int(descent_time), descent_angle),
-        np.full(int(ascent_time), ascent_angle)
-    ])
-    
-
-
-logic_dict = {
-    "Rectangles": [Rectangles_pitch_function,
-                   [[0, 300],   # descent_time
-                    [0, 90],    # descent_angle
-                    [0, 300],  # ascent_time
-                    [-90, 0]     # up_angle
-                    ],
-                    [160, 33, 120, -33]],
-
-    "RSBoi": [RSBoi_pitch_function,
-              [[0, 300],  # descent_time
-               [0, 90],   # descent_angle
-               [-90, 0],  # up_angle
-               [0, 10]    # pitch change rate
-               ],
-              [120, 33, -50, 0.5]],
-
-    "Inverse_RSBoi": [Inverse_RSBoi_pitch_function,
-                    [[0, 90],   # down_angle
-                    [-10, 0],  # pitch_change_rate
-                    [0, 300],  # ascent_time
-                    [-90, 0]   # ascent_angle
-                    ],
-                    [50, -0.5, 120, -33]],
-    }
-
-
-
-def OptimizeLogic(logic, N=10, total_time=2000, starting_height=150, verbose=False):
+def OptimizeLogic(logic_name, N=10, total_time=2000, starting_height=150, verbose=False):
         
-    print(f"\nOptimizing for logic: {logic}")
-    solution = SolutionTemplate(logic_dict[logic][0], parameters_range=logic_dict[logic][1], initial_parameters=logic_dict[logic][2])
+    print(f"\nOptimizing for logic: {logic_name}")
+    solution = SolutionTemplate(*logic_dict[logic_name])
     solution.set_total_time(total_time)
     solution.set_starting_height(starting_height)
 
@@ -278,15 +245,15 @@ def OptimizeLogic(logic, N=10, total_time=2000, starting_height=150, verbose=Fal
     solution.best_optimized(N=N)
     solution.set_verbose(verbose)
     solution.print_results()
-    solution.plot(save_name=logic, save_only=True)
-    solution.save_results(logic)
+    solution.plot(save_name=logic_name, save_only=True)
+    solution.save_results(logic_name)
 
     solution.set_goal('max_distance')
     solution.best_optimized(N=N)
     solution.set_verbose(verbose)
     solution.print_results()
-    solution.plot(save_name=logic, save_only=True)
-    solution.save_results(logic)
+    solution.plot(save_name=logic_name, save_only=True)
+    solution.save_results(logic_name)
 
 
 if __name__ == "__main__":
