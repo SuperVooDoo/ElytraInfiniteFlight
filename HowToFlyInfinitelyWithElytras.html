@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> How To Fly Infinitely With Elytras</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <h1> How To Fly Infinitely With Elytras</h1>
+    <div id="plot"></div>
+    
+    <label for="sliderDownPitch">Choose the down pitch :</label>
+    <input type="range" id="sliderDownPitch" min="0" max="90" step="1" value="30">
+    <p><b> Down Pitch (°) : <span id="sliderDownPitchValue">30</span></b></p>
+    <br>
+    
+    <label for="sliderUpPitch">Choose the up pitch :</label>
+    <input type="range" id="sliderUpPitch" min="-90" max="0" step="1" value="-30">
+    <p><b> Up Pitch (°) : <span id="sliderUpPitchValue">-30</span></b></p>
+    <br>
+    
+    <label for="sliderTime">Choose the duration of each descent :</label>
+    <input type="range" id="sliderTime" min="10" max="500" step="5" value="200">
+    <p> Time (ticks) : <span id="sliderTimeValue">200</span></p>
+    <p><b> Time (s) : <span id="sliderTimeSValue">10</span></b></p>
+    <br>
+    
+    <label for="sliderStartingHeight">Choose the starting height :</label>
+    <input type="range" id="sliderStartingHeight" min="10" max="200" step="1" value="100">
+    <p><b> Starting Height (blocks) : <span id="sliderStartingHeightValue">100</span></b></p>
+    
+    <script>
+        // Function to generate the data for the plot f(x) = x^n
+        function generateData(n) {
+            let x = [];
+            let y = [];
+            
+            // Generate data points
+            for (let i = 1; i <= 500; i++) {
+                x.push(i/100);
+                y.push(Math.cos(n*i/100));  // f(x) = x^n
+            }
+            
+            return { x: x, y: y };
+        }
+
+
+        function updateMovement(dx, dy, pitch){
+            let gravity = 0.08;
+            pitch *= 0.01745329252;
+            let cos_squared = Math.cos(pitch) ** 2;
+
+            dy += gravity * (-1.0 + cos_squared * 0.75);
+
+            if (dy < 0.0){
+                let boost = dy * -0.1 * cos_squared
+                dx += boost;
+                dy += boost;
+            }
+
+            if (pitch < 0.0){
+                let lift = dx * -Math.sin(pitch) * 0.04
+                dx += -lift;
+                dy += lift * 3.2
+                dx = Math.max(dx, 0.01)
+                }
+            dx *= 0.99
+            dy *= 0.98
+
+            return [dx, dy];
+        }
+
+        function elytraTrajectory(pitch_d, pitch_u = 90, time = 160, start = 100){
+            if (pitch_u == 90){
+                pitch_u = - pitch_d;
+            }
+            let x = 0;
+            let y = start;
+            let dx = 0.01;
+            let dy = 0;
+            let X = [x];
+            let Y = [y];
+
+            while (y >= 0.0 && x <= 10000){
+
+                for (let i = 0; i < time; i++){
+                    if (y <= 0){
+                        break;
+                    }
+                    x += dx;
+                    y += dy;
+                    let motion = updateMovement(dx, dy, pitch_d);
+                    dx = motion[0];
+                    dy = motion[1];
+                    X.push(x);
+                    Y.push(y);
+                }
+
+                while (dy <= 0){
+                    if (y <= 0){
+                        break;
+                    }
+                    x += dx;
+                    y += dy;
+                    let motion = updateMovement(dx, dy, pitch_u);
+                    dx = motion[0];
+                    dy = motion[1];
+                    X.push(x);
+                    Y.push(y);
+                }
+
+                while (dy >= 0){
+                    if (y <= 0){
+                        break;
+                    }
+                    x += dx;
+                    y += dy;
+                    let motion = updateMovement(dx, dy, pitch_u);
+                    dx = motion[0];
+                    dy = motion[1];
+                    X.push(x);
+                    Y.push(y);
+                }
+            }
+
+            return { x: X, y: Y };
+        }
+
+
+
+        // Initial layout for the plot
+        let layout = {
+            title: 'Elytra Trajectory without fireworks',
+            xaxis: {
+                title: 'Horizontal distance (blocks)',
+                range: [0, 3000]
+            },
+            yaxis: {
+                title: 'y Height',
+                range: [0, 200]
+            }
+        };
+
+        // Function to update the plot based on the slider value
+        function updateGraph() {
+            let pitch_d = parseInt(document.getElementById('sliderDownPitch').value);
+            let pitch_u = parseInt(document.getElementById('sliderUpPitch').value);
+            let time = parseInt(document.getElementById('sliderTime').value);
+            let start = parseInt(document.getElementById('sliderStartingHeight').value);
+
+            let data = elytraTrajectory(pitch_d, pitch_u, time, start);
+            
+            // Update the plot
+            Plotly.react('plot', [{
+                x: data.x,
+                y: data.y,
+                mode: 'lines',
+                type: 'scatter',
+            }], layout);
+            
+            // Update the displayed slider value
+            document.getElementById('sliderDownPitchValue').innerText = pitch_d;
+            document.getElementById('sliderUpPitchValue').innerText = pitch_u;
+            document.getElementById('sliderTimeValue').innerText = time;
+            document.getElementById('sliderTimeSValue').innerText = time/20;
+            document.getElementById('sliderStartingHeightValue').innerText = start;
+        }
+
+        // Initial plot rendering
+        updateGraph();
+
+        // Event listener for the slider
+        document.getElementById('sliderDownPitch').addEventListener('input', updateGraph);
+        document.getElementById('sliderUpPitch').addEventListener('input', updateGraph);
+        document.getElementById('sliderTime').addEventListener('input', updateGraph);
+        document.getElementById('sliderStartingHeight').addEventListener('input', updateGraph);
+    </script>
+</body>
+</html>
