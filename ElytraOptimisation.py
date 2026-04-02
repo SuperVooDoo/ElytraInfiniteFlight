@@ -6,6 +6,9 @@ import dill
 import json
 import matplotlib.pyplot as plt
 
+import warnings
+warnings.filterwarnings('ignore', module='cma')
+
 from ElytraMovement import simulate_pitch_list
 import pitch_functions
 
@@ -50,7 +53,8 @@ class SolutionTemplate:
     def objective(self, params, goal = 'max_height'):
 
         pitches = np.clip(self.pitches(params), -90, 90)
-        best_position = simulate_pitch_list(pitches, get_best_position=True)
+        best_position = simulate_pitch_list(pitches, get_last_position=True)
+        
 
         if goal == 'max_height':
             return -best_position[1]
@@ -117,8 +121,7 @@ class SolutionTemplate:
 
         for i in range(N):
 
-            if self.verbose:
-                print(f"\nOptimization run {i+1}/{N} for goal: {self.goal}")
+            print(f"\nOptimization run {i+1}/{N} for goal: {self.goal}")
             self.optimize()
             if self.goal == 'max_height':
                 current_goal = self.optimized_position[1]
@@ -140,6 +143,8 @@ class SolutionTemplate:
 
         if not self.verbose:
             return
+        
+        assert self.optimized_parameters is not None, "Optimization has not been run yet. Call optimize() or best_optimized() first."
 
         print(f"\nOptimized parameters: {[(low + (high - low) * param) for (low, high), param in zip(self.parameters_range, self.optimized_parameters)]}")
         print(f"\nFinal position: {self.optimized_position[0]:.1f}, {self.optimized_position[1]:.1f}")
@@ -158,6 +163,7 @@ class SolutionTemplate:
         ax1.set_ylabel("pitch (degrees)")
         ax1.set_xlabel("step within period")
         ax1.legend()
+        fig.suptitle(f"Logic: {save_name}, Goal: {self.goal}, Time: {self.TOTAL_TIME}")
 
         ax2.plot(*simulate_pitch_list(self.pitches(self.initial_parameters), start_height=self.starting_height), color='#6E0F56', linewidth=1.2, linestyle='--', label='baseline')
         if self.optimized_parameters is not None:
@@ -218,7 +224,7 @@ class SolutionTemplate:
 
 
 
-def LoadLogics(path="logic_config.json"):
+def LoadLogics(path="Logics.json"):
     with open(path) as f:
         logics = json.load(f)
 
@@ -245,17 +251,17 @@ def OptimizeLogic(logic_name, N=10, total_time=2000, starting_height=150, verbos
     solution.best_optimized(N=N)
     solution.set_verbose(verbose)
     solution.print_results()
-    solution.plot(save_name=logic_name, save_only=True)
+    solution.plot(save_name=logic_name, save_only=not verbose)
     solution.save_results(logic_name)
 
     solution.set_goal('max_distance')
     solution.best_optimized(N=N)
-    solution.set_verbose(verbose)
     solution.print_results()
-    solution.plot(save_name=logic_name, save_only=True)
+    solution.plot(save_name=logic_name, save_only=not verbose)
     solution.save_results(logic_name)
 
 
 if __name__ == "__main__":
 
-    OptimizeLogic("Inverse_RSBoi", N=10)
+    for logic_name in logic_dict.keys():
+        OptimizeLogic(logic_name, N=10, verbose=False)
