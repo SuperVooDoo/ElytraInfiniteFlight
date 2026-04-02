@@ -15,17 +15,17 @@ import pitch_functions
 
 class SolutionTemplate:
 
-    def __init__(self, logic_pattern: callable, parameters_range: np.ndarray, initial_parameters = None):
+    def __init__(self, strategy_pattern: callable, parameters_range: np.ndarray, initial_parameters = None):
         """
         A template for optimization problems using CMA-ES depending of a function to generate pitches 
 
-        logic_pattern: a callable that takes in a list of parameters and returns a list of pitch values (one per time step).
+        strategy_pattern: a callable that takes in a list of parameters and returns a list of pitch values (one per time step).
         parameters_range: a 2D numpy array where each row contains the lower and upper bounds for a parameter.
         initial_parameters: a list of initial parameter values to start the optimization from. The length of this list should match the number of parameters expected by the function.
         
         """
 
-        self.logic_pattern = logic_pattern
+        self.strategy_pattern = strategy_pattern
         self.parameters_range = np.array(parameters_range)
         self.TOTAL_TIME = 500
         self.starting_height = 100
@@ -46,7 +46,7 @@ class SolutionTemplate:
 
     def pitches(self, normalized_params):
         scaled_params = [low + (high - low) * param for (low, high), param in zip(self.parameters_range, normalized_params)]
-        root_array = np.array(self.logic_pattern(*scaled_params))
+        root_array = np.array(self.strategy_pattern(*scaled_params))
         return np.resize(root_array, self.TOTAL_TIME)
 
 
@@ -163,7 +163,7 @@ class SolutionTemplate:
         ax1.set_ylabel("pitch (degrees)")
         ax1.set_xlabel("step within period")
         ax1.legend()
-        fig.suptitle(f"Logic: {save_name}, Goal: {self.goal}, Time: {self.TOTAL_TIME}")
+        fig.suptitle(f"Strategy: {save_name}, Goal: {self.goal}, Time: {self.TOTAL_TIME}")
 
         ax2.plot(*simulate_pitch_list(self.pitches(self.initial_parameters), start_height=self.starting_height), color='#6E0F56', linewidth=1.2, linestyle='--', label='baseline')
         if self.optimized_parameters is not None:
@@ -224,26 +224,26 @@ class SolutionTemplate:
 
 
 
-def LoadLogics(path="Logics.json"):
+def LoadStrategies(path="Strategies.json"):
     with open(path) as f:
-        logics = json.load(f)
+        strategies = json.load(f)
 
-    logic_dict = {}
-    for name, config in logics.items():
+    strategy_dict = {}
+    for name, config in strategies.items():
         func     = getattr(pitch_functions, f"{name}_pitch_function")
         params   = config["params"]
         ranges   = [p["range"]   for p in params.values()]
         defaults = [p["default"] for p in params.values()]
-        logic_dict[name] = [func, ranges, defaults]
+        strategy_dict[name] = [func, ranges, defaults]
 
-    return logic_dict
+    return strategy_dict
 
-logic_dict = LoadLogics()
+strategy_dict = LoadStrategies()
 
-def OptimizeLogic(logic_name, N=10, total_time=2000, starting_height=150, verbose=False):
+def OptimizeStrategy(strategy_name, N=10, total_time=2000, starting_height=150, verbose=False):
         
-    print(f"\nOptimizing for logic: {logic_name}")
-    solution = SolutionTemplate(*logic_dict[logic_name])
+    print(f"\nOptimizing for strategy: {strategy_name}")
+    solution = SolutionTemplate(*strategy_dict[strategy_name])
     solution.set_total_time(total_time)
     solution.set_starting_height(starting_height)
 
@@ -251,17 +251,17 @@ def OptimizeLogic(logic_name, N=10, total_time=2000, starting_height=150, verbos
     solution.best_optimized(N=N)
     solution.set_verbose(verbose)
     solution.print_results()
-    solution.plot(save_name=logic_name, save_only=not verbose)
-    solution.save_results(logic_name)
+    solution.plot(save_name=strategy_name, save_only=not verbose)
+    solution.save_results(strategy_name)
 
     solution.set_goal('max_distance')
     solution.best_optimized(N=N)
     solution.print_results()
-    solution.plot(save_name=logic_name, save_only=not verbose)
-    solution.save_results(logic_name)
+    solution.plot(save_name=strategy_name, save_only=not verbose)
+    solution.save_results(strategy_name)
 
 
 if __name__ == "__main__":
 
-    for logic_name in logic_dict.keys():
-        OptimizeLogic(logic_name, N=10, verbose=False)
+    for strategy_name in strategy_dict.keys():
+        OptimizeStrategy(strategy_name, N=10, verbose=False)
