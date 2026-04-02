@@ -151,8 +151,13 @@ def sim_alternate_pitch(pitch_d, pitch_u = None, start = 100, time = 160):
     return X, Y, P
 
 
-def simulate_pitch_list(pitch_input, start_height = 100, only_maxes = False, get_best_position = False):
+def simulate_pitch_list(pitch_input, start_height = 100, only_maxes = False, get_last_position = False, get_best_position = False):
     """ Simulate movement given a list of pitch values, one per time step. """
+
+    if get_best_position:
+        get_last_position = True
+        only_maxes = True
+
     position = Vec2D(0, start_height)
     motion = Vec2D(0.01, 0.0)
     X = [position.x]
@@ -167,21 +172,23 @@ def simulate_pitch_list(pitch_input, start_height = 100, only_maxes = False, get
         X.append(position.x)
         Y.append(position.y)
 
-    if only_maxes or get_best_position:
+    if only_maxes:
         M_X = []
         M_Y = []
         for i in range(1, len(X)-1):
             if Y[i] > Y[i-1] and Y[i] > Y[i+1]:
                 M_X.append(X[i])
                 M_Y.append(Y[i])
-        if get_best_position:
-            if M_Y:
-                return M_X[-1], M_Y[-1]
-            else:
-                return X[-1], Y[-1]
-        return M_X, M_Y
-
-    return X, Y
+        if M_Y:
+            R_X, R_Y = M_X, M_Y
+        else:
+            R_X, R_Y = X, Y
+    else:
+        R_X, R_Y = X, Y
+    if get_last_position:
+        return R_X[-1], R_Y[-1]
+    else:
+        return R_X, R_Y
 
 
 
