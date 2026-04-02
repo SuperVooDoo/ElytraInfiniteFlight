@@ -14,5 +14,17 @@
       "up_angle":          {"range": [-90,  0], "default": -50},
       "pitch_change_rate": {"range": [0,  10], "default":  0.5}
     }
+  },
+  "Waves": {
+    "params": {
+      "descent_time":      {"range": [0, 300], "default": 120},
+      "descent_angle":     {"range": [0,  90], "default":  33},
+      "up_angle":          {"range": [-90,  0], "default": -50},
+      "ascent_pitch_rate": {"range": [0,   10], "default": 0.5},
+      "ascent_time":       {"range": [0, 300], "default": 120},
+      "ascent_angle":      {"range": [-90,  0], "default": -33},
+      "down_angle":        {"range": [0,  90], "default": 50},
+      "descent_pitch_rate":{"range": [-10,   0], "default": -0.5}
+    }
   }
 }
